@@ -46,4 +46,3 @@ Start-Sleep 2
 Get-Service | Where-Object {$_.Name -like '*ScreenConnect*'} | Start-Service
 
 Write-Host "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] === Complete ==="
-Read-Host "Press Enter"
