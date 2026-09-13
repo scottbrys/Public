@@ -13,14 +13,11 @@ function Log {
     Add-Content -Path $LogPath -Value $entry -ErrorAction SilentlyContinue
 }
 
-# Create temp directory if needed
 if (-not (Test-Path "C:\temp")) {
     New-Item -Path "C:\temp" -ItemType Directory -Force | Out-Null
 }
 
 Log "=== ScreenConnect Upgrade Started ==="
-
-# Detect ALL installed ScreenConnect instances using REGISTRY
 Log "Detecting all installed ScreenConnect versions..."
 
 $instancesToUpgrade = @()
@@ -39,11 +36,10 @@ foreach ($regPath in $regPaths) {
             
             if ($displayName -like "*ScreenConnect*") {
                 $productCode = Split-Path -Leaf $key.PSPath
-                
                 Log "Instance: $displayName v$displayVersion (ProductCode: $productCode)"
                 
                 if ($displayVersion -ne "26.6.5.9742") {
-                    Log "  → Needs upgrade"
+                    Log "  -> Needs upgrade"
                     $instancesToUpgrade += @{
                         Name = $displayName
                         Version = $displayVersion
@@ -51,7 +47,7 @@ foreach ($regPath in $regPaths) {
                         RegistryPath = $key.PSPath
                     }
                 } else {
-                    Log "  → Already at target version, skipping"
+                    Log "  -> Already at target version, skipping"
                 }
             }
         }
@@ -66,7 +62,6 @@ if ($instancesToUpgrade.Count -eq 0) {
     $skipUpgrade = $false
 }
 
-# Download MSI from GitHub if not present
 if (!(Test-Path $MSIPath)) {
     Log "Downloading MSI from GitHub..."
     try {
@@ -76,13 +71,11 @@ if (!(Test-Path $MSIPath)) {
         Log "Download complete: $MSIPath"
     } catch {
         Log "ERROR: Failed to download MSI - $($_.Exception.Message)"
-        Log "Exception Details: $($_ | Out-String)"
         Read-Host "Press Enter to close"
         exit 1
     }
 }
 
-# Verify MSI exists
 if (!(Test-Path $MSIPath)) {
     Log "ERROR: MSI not found at $MSIPath"
     Read-Host "Press Enter to close"
@@ -90,11 +83,8 @@ if (!(Test-Path $MSIPath)) {
 }
 Log "MSI ready: $MSIPath"
 
-# Only stop/upgrade if needed
 if (-not $skipUpgrade) {
     Log "Starting upgrade process..."
-    
-    # Stop ALL ScreenConnect services
     Log "Stopping all ScreenConnect services..."
     try {
         Get-Service | Where-Object { $_.Name -like "*ScreenConnect*" } | Where-Object { $_.Status -eq 'Running' } | ForEach-Object {
@@ -108,7 +98,6 @@ if (-not $skipUpgrade) {
     }
     Start-Sleep -Seconds 2
 
-    # Upgrade each instance that needs it
     foreach ($product in $instancesToUpgrade) {
         $ProductCode = $product.ProductCode
         $Name = $product.Name
@@ -116,7 +105,6 @@ if (-not $skipUpgrade) {
 
         Log "Upgrading: $Name (v$Version)"
 
-        # Try to find and delete installation folder
         try {
             $installKey = Get-Item -Path $product.RegistryPath -ErrorAction SilentlyContinue
             $InstallPath = $installKey.GetValue("InstallLocation")
@@ -132,7 +120,6 @@ if (-not $skipUpgrade) {
             Log "  WARNING: Folder delete failed - $($_.Exception.Message)"
         }
 
-        # Force-remove registry entries
         try {
             Log "  Cleaning registry..."
             $regCommands = @(
@@ -145,7 +132,6 @@ if (-not $skipUpgrade) {
                 try {
                     cmd /c $cmd 2>&1 | Out-Null
                 } catch {
-                    # Errors expected if keys don't exist
                 }
             }
             Log "  Registry cleaned"
@@ -155,7 +141,6 @@ if (-not $skipUpgrade) {
 
         Start-Sleep -Seconds 1
 
-        # Install new version
         Log "  Installing new version..."
         try {
             $install = Start-Process -FilePath "msiexec.exe" -ArgumentList "/i `"$MSIPath`" /qn /norestart REINSTALLMODE=vomus /L*v `"C:\temp\SC_MSI_Log.txt`"" -PassThru -Wait
