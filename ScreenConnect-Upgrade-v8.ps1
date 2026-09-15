@@ -13,7 +13,7 @@ Write-Host "[$timestamp] === ScreenConnect Upgrade v8 Started ===" -ForegroundCo
 # Enforce TLS 1.2
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$msiUrl = "https://raw.githubusercontent.com/scottbrys/Public/releases/download/v26.6.5.9742/ScreenConnect-Upgrade-Clean.msi"
+$msiUrl = "https://raw.githubusercontent.com/scottbrys/Public/main/ScreenConnect-Upgrade-Clean.msi"
 $msiPath = "C:\temp\ScreenConnect-$TargetVersion.msi"
 
 # Registry paths to search
