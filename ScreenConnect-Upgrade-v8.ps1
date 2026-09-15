@@ -90,7 +90,7 @@ if ($needsUpgrade.Count -gt 0) {
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     Write-Host "[$timestamp] Downloading MSI from GitHub..." -ForegroundColor White
     try {
-        (New-Object Net.WebClient).DownloadFile($msiUrl, $msiPath)
+        Invoke-WebRequest -Uri $msiUrl -OutFile $msiPath -ErrorAction Stop
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         Write-Host "[$timestamp] Download complete: $msiPath" -ForegroundColor Green
     } catch {
